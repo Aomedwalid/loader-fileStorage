@@ -2,6 +2,7 @@ package org.uploader.fileuploadtest.exception_handling;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -15,7 +16,10 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.uploader.fileuploadtest.dto.response.ErrorResponse;
 import org.uploader.fileuploadtest.dto.response.main.MainResponse;
-import org.uploader.fileuploadtest.exception_handling.costumeErrors.*;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.directory.DirectoryException;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.directory.DirectorySortingException;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.encryption.AesEncryptionException;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.*;
 import org.uploader.fileuploadtest.mapper.ErrorMapper;
 import org.uploader.fileuploadtest.mapper.MainResponseMapper;
 
@@ -30,9 +34,36 @@ public class GlobalHandler {
     private final MainResponseMapper mainResponseMapper;
     private final ErrorMapper errorMapper;
 
-    //merging
-    @ExceptionHandler(AssemblingException.class)
-    public ResponseEntity<MainResponse> DirectoryError(AssemblingException ex ,
+
+
+    //security detection
+
+    @ExceptionHandler(AesEncryptionException.class)
+    public ResponseEntity<MainResponse> DirectoryError(AesEncryptionException ex ,
+                                                       HttpServletRequest request ){
+
+        Map<String , String> errors = new HashMap<>();
+
+        errors.put("purpose : " , ex.getMessage());
+
+        ErrorResponse errorResponse = errorMapper.createNormalError(
+                request.getRequestURI(),
+                errors
+        );
+
+        MainResponse response = mainResponseMapper.failed(
+                HttpStatus.BAD_REQUEST.value(),
+                "encryption error",
+                errorResponse
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+    }
+
+
+    @ExceptionHandler(IllegalFileException.class)
+    public ResponseEntity<MainResponse> DirectoryError(IllegalFileException ex ,
                                                        HttpServletRequest request ){
 
         Map<String , String> errors = new HashMap<>();
@@ -54,6 +85,30 @@ public class GlobalHandler {
 
     }
 
+    //merging
+    @ExceptionHandler(AssemblingException.class)
+    public ResponseEntity<MainResponse> DirectoryError(AssemblingException ex ,
+                                                       HttpServletRequest request ){
+
+        Map<String , String> errors = new HashMap<>();
+
+        errors.put("purpose : " , ex.getMessage());
+
+        ErrorResponse errorResponse = errorMapper.createNormalError(
+                request.getRequestURI(),
+                errors
+        );
+
+        MainResponse response = mainResponseMapper.failed(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "merging error",
+                errorResponse
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+
+    }
+
 
     @ExceptionHandler(DirectorySortingException.class)
     public ResponseEntity<MainResponse> DirectoryError(DirectorySortingException ex ,
@@ -69,12 +124,12 @@ public class GlobalHandler {
         );
 
         MainResponse response = mainResponseMapper.failed(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Directory error",
                 errorResponse
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 
     }
 
@@ -142,6 +197,29 @@ public class GlobalHandler {
     }
 
     // upload session related errors
+
+    @ExceptionHandler(AlreadyExistedFileName.class)
+    public ResponseEntity<MainResponse> AlreadyExistedFileName(AlreadyExistedFileName ex ,
+                                                       HttpServletRequest request ){
+
+        Map<String , String> errors = new HashMap<>();
+
+        errors.put("purpose : " , ex.getMessage());
+
+        ErrorResponse errorResponse = errorMapper.createNormalError(
+                request.getRequestURI(),
+                errors
+        );
+
+        MainResponse response = mainResponseMapper.failed(
+                HttpStatus.BAD_REQUEST.value(),
+                "file name already existed",
+                errorResponse
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+    }
 
     @ExceptionHandler(IncompletedUploadSession.class)
     public ResponseEntity<MainResponse> DirectoryError(IncompletedUploadSession ex ,
@@ -309,6 +387,25 @@ public class GlobalHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    //sql errors
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<MainResponse> uniqueKeyViolation( DataIntegrityViolationException e , HttpServletRequest request){
+
+        ErrorResponse errorResponse = errorMapper.createNormalError(
+                request.getRequestURI(),
+                Collections.emptyMap()
+        );
+
+        MainResponse response = mainResponseMapper.failed(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "something went wrong! " + e.getMessage(),
+                errorResponse
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     //Internal server errors

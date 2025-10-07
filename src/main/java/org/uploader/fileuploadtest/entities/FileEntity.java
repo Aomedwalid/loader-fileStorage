@@ -4,40 +4,31 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.Instant;
-
 @Getter
 @Setter
 @Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UploadSession {
+public class FileEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false , unique = true)
-    private String uploadId;
-
-    @Column(nullable = false , unique = true)
+    @Column(unique = true , nullable = false)
     private String fileName;
 
     @Column(nullable = false)
-    private int totalChunks;
+    private String uploadSession;
 
     @Column(nullable = false)
-    private String contentType;
+    private String fileType;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    @Column(nullable = false)
+    private String fileSize;
 
     @CreationTimestamp
     @Column(nullable = false , name = "created_at" , updatable = false)
-    private Instant createdAt;
-
-
-    public enum Status{
-        IN_PROGRESS , COMPLETED , CANCELED
-    }
+    private String createdAt;
 }

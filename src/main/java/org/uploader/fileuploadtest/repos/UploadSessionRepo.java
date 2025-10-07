@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UploadSessionRepo extends JpaRepository<UploadSession , Long> {
+    Boolean existsUploadSessionByFileName(String fileName);
 
     Optional<UploadSession> findByUploadId(String uploadId);
 

@@ -17,10 +17,11 @@ import org.uploader.fileuploadtest.dto.response.upload.ChunkResponse;
 import org.uploader.fileuploadtest.dto.response.upload.UploadSessionResponse;
 import org.uploader.fileuploadtest.dto.response.upload.UploadStatusResponse;
 import org.uploader.fileuploadtest.entities.UploadSession;
-import org.uploader.fileuploadtest.exception_handling.costumeErrors.DirectoryException;
-import org.uploader.fileuploadtest.exception_handling.costumeErrors.InactivatedUploadSession;
-import org.uploader.fileuploadtest.exception_handling.costumeErrors.InvalidChunk;
-import org.uploader.fileuploadtest.exception_handling.costumeErrors.InvalidUploadSession;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.directory.DirectoryException;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.AlreadyExistedFileName;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InactivatedUploadSession;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InvalidChunk;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InvalidUploadSession;
 import org.uploader.fileuploadtest.mapper.uploadProccess.ChunksMapper;
 import org.uploader.fileuploadtest.mapper.uploadProccess.UploadSessionMapper;
 import org.uploader.fileuploadtest.mapper.uploadProccess.UploadStatusMapper;
@@ -61,6 +62,10 @@ public class UploadServiceImpl implements UploadService {
 
     @Override
     public UploadSessionResponse createUploadSession(UploadSessionRequest createUploadSession){
+
+        if (uploadSessionRepo.existsUploadSessionByFileName(createUploadSession.getFileName())){
+            throw new AlreadyExistedFileName("code u1");
+        }
 
         UploadSession uploadSession = uploadSessionMapper.createUploadSession(
                 createUploadSession.getFileName(),
@@ -291,6 +296,7 @@ public class UploadServiceImpl implements UploadService {
                     .build();
 
             assert redisTemplate.getConnectionFactory() != null;
+
             RedisKeyCommands keyCommands = redisTemplate.getConnectionFactory().getConnection().keyCommands();
             try (Cursor<byte[]> cursor = keyCommands.scan(options)) {
                 cursor.forEachRemaining(item -> keys.add(new String(item, StandardCharsets.UTF_8)));
