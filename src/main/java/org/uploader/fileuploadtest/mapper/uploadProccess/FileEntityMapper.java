@@ -10,12 +10,14 @@ public class FileEntityMapper {
     public FileEntity createFile(
             String fileName,
             String uploadSession,
+            String filePath,
             String fileType,
             String fileSize
     ){
         return FileEntity.builder()
                 .fileName(fileName)
                 .uploadSession(uploadSession)
+                .filePath(filePath)
                 .fileSize(fileSize)
                 .fileType(fileType)
                 .build();

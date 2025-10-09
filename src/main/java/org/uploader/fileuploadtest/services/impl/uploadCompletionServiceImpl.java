@@ -83,7 +83,9 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
 
         Long fileSize = getFileSize(finalFilePath);
 
-        String MimeExtension = MimeValidation(finalFilePath);
+        String MimeExtensionRaw = MimeValidation(finalFilePath);
+
+        String MimeExtension = extensionFromMime(MimeExtensionRaw);
 
         finalFilePath = refactorFileExtension(MimeExtension , finalFilePath , currentSession.getFileName() , uploadId);
 
@@ -93,11 +95,12 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
             deleteInfectedFile(finalFilePath , "This file is a Danger for our system");
         }
 
-        encryptFile(finalFilePath);
+        Path encryptedFilePath = encryptFile(finalFilePath);
 
         FileEntity fileMetaData = fileEntityMapper.createFile(
                 currentSession.getFileName(),
                 currentSession.getUploadId(),
+                encryptedFilePath.toString(),
                 MimeExtension,
                 fileSize.toString()
         );
@@ -211,7 +214,7 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
             }
 
 
-            return extensionFromMime(mimeType);
+            return mimeType;
 
         }
         catch (IOException e){
@@ -271,9 +274,9 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
 
     }
 
-    private void encryptFile(Path filePath){
+    private Path encryptFile(Path filePath){
         if (!encryptionEnabled){
-            return;
+            return filePath;
         }
         try {
             Path aesPath = Paths.get(aesKey);
@@ -296,11 +299,15 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
 
                 byte[] buffer = new byte[8192];
                 int byteRead;
+
                 while ((byteRead = in.read(buffer)) != -1 ){
+
                     byte[] encrypted = cipher.update(buffer , 0 , byteRead);
+
                     if (encrypted != null) {
                         out.write(encrypted);
                     }
+
                 }
                 byte[] finalBlock = cipher.doFinal();
                 if (finalBlock != null) {
@@ -312,6 +319,8 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
             }
 
             Files.deleteIfExists(filePath);
+
+            return encryptedPath;
 
         }
         catch (NoSuchPaddingException | NoSuchAlgorithmException | IOException e) {
@@ -353,7 +362,7 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
 
     }
 
-    private static String extensionFromMime(String mimeType) {
+    public static String extensionFromMime(String mimeType) {
         return switch (mimeType) {
             case "image/jpeg" -> ".jpg";
             case "image/png" -> ".png";
@@ -368,7 +377,7 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
         };
     }
 
-    private SecretKey getOrCreateSecretKey(Path aesPath) {
+    public SecretKey getOrCreateSecretKey(Path aesPath) {
         try {
             if (Files.exists(aesPath)){
 

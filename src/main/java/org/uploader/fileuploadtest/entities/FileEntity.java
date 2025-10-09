@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.nio.file.Path;
+
 @Getter
 @Setter
 @Entity
@@ -21,6 +23,9 @@ public class FileEntity {
 
     @Column(nullable = false)
     private String uploadSession;
+
+    @Column(nullable = false ,name = "file_path")
+    private String filePath;
 
     @Column(nullable = false)
     private String fileType;
