@@ -43,4 +43,13 @@ public class UsersFiles {
         return fileService.downloadFile(fileName);
     }
 
+    @GetMapping("/download/{fileName}/chunk/{index}")
+    public ResponseEntity<StreamingResponseBody> downloadFileChunk(
+            @PathVariable("fileName") String fileName,
+            @PathVariable("index") int index,
+            @RequestParam(value = "chunkSize", required = false) Long chunkSize
+    ){
+        return fileService.downloadFileChunk(fileName, index, chunkSize);
+    }
+
 }

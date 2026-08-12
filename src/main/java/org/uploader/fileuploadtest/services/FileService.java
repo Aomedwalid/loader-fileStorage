@@ -9,4 +9,6 @@ public interface FileService {
     PageResponse getAllFiles(int page , int size);
 
     ResponseEntity<StreamingResponseBody> downloadFile(String fileName);
+
+    ResponseEntity<StreamingResponseBody> downloadFileChunk(String fileName, int index, Long chunkSize);
 }
