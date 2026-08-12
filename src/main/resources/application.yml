@@ -22,9 +22,22 @@ spring:
 
 app:
   upload:
-    base-path: ./uploads/temp
-    final-path: ./uploads/fin
+    base-path: "/var/myapp/uploads/temp"
+    final-path: "/var/myapp/uploads/fin"
 #    base-path: "/var/myapp/uploads/temp" for production
+
+  encryption:
+    enabled: true
+    aes-key: "/secured/path/aes.txt"
+    level: 256
+
+  download:
+    chunk-size: 1048576
+    max-chunk-size: 104857600
+
+  clamav:
+    enabled: true
+    path: 'C:\Program Files\ClamAV\clamscan.exe'
 
   redis:
     progress-key-prefix: "progress : "
