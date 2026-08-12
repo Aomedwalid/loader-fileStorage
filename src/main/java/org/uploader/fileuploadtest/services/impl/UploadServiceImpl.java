@@ -21,6 +21,7 @@ import org.uploader.fileuploadtest.exception_handling.costumeErrors.directory.Di
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.AlreadyExistedFileName;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InactivatedUploadSession;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InvalidChunk;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InvalidFileName;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.InvalidUploadSession;
 import org.uploader.fileuploadtest.mapper.uploadProccess.ChunksMapper;
 import org.uploader.fileuploadtest.mapper.uploadProccess.UploadSessionMapper;
@@ -62,6 +63,8 @@ public class UploadServiceImpl implements UploadService {
 
     @Override
     public UploadSessionResponse createUploadSession(UploadSessionRequest createUploadSession){
+
+        validateFileName(createUploadSession.getFileName());
 
         if (uploadSessionRepo.existsUploadSessionByFileName(createUploadSession.getFileName())){
             throw new AlreadyExistedFileName("code u1");
@@ -338,6 +341,22 @@ public class UploadServiceImpl implements UploadService {
     }
 
     //---------------------reusable methods--------------------------------
+
+    private void validateFileName(String fileName) {
+        boolean invalid = fileName.isBlank()
+                || fileName.equals(".")
+                || fileName.equals("..")
+                || fileName.indexOf('/') >= 0
+                || fileName.indexOf('\\') >= 0
+                || fileName.indexOf('"') >= 0
+                || fileName.indexOf('\r') >= 0
+                || fileName.indexOf('\n') >= 0
+                || fileName.indexOf('\0') >= 0;
+
+        if (invalid) {
+            throw new InvalidFileName("file name is not valid");
+        }
+    }
 
     private UploadSession getCurrentSession(String uploadId){
 
