@@ -59,6 +59,10 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
     private String aesKey;
     @Value("${app.encryption.level}")
     private int encryptionLevel;
+    @Value("${app.clamav.enabled:true}")
+    private Boolean clamavEnabled;
+    @Value("${app.clamav.path:C:\\Program Files\\ClamAV\\clamscan.exe}")
+    private String clamavPath;
 
     @Override
     public UploadCompletedResponse uploadCompleted(String uploadId){
@@ -89,10 +93,12 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
 
         finalFilePath = refactorFileExtension(MimeExtension , finalFilePath , currentSession.getFileName() , uploadId);
 
-        Boolean noninfected = scanWithClamAv(finalFilePath.toString());
+        if (Boolean.TRUE.equals(clamavEnabled)) {
+            Boolean noninfected = scanWithClamAv(finalFilePath.toString());
 
-        if(!noninfected){
-            deleteInfectedFile(finalFilePath , "This file is a Danger for our system");
+            if (!noninfected){
+                deleteInfectedFile(finalFilePath , "This file is a Danger for our system");
+            }
         }
 
         Path encryptedFilePath = encryptFile(finalFilePath);
@@ -240,7 +246,7 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
     private Boolean scanWithClamAv(String filePath) {
 
         try {
-            ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\ClamAV\\clamscan.exe" , filePath);
+            ProcessBuilder pb = new ProcessBuilder(clamavPath , filePath);
 
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -274,7 +280,7 @@ public class uploadCompletionServiceImpl implements UploadCompletionService {
 
     }
 
-    private Path encryptFile(Path filePath){
+    Path encryptFile(Path filePath){
         if (!encryptionEnabled){
             return filePath;
         }
