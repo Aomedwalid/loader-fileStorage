@@ -18,6 +18,7 @@ import org.uploader.fileuploadtest.dto.response.ErrorResponse;
 import org.uploader.fileuploadtest.dto.response.main.MainResponse;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.directory.DirectoryException;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.directory.DirectorySortingException;
+import org.uploader.fileuploadtest.exception_handling.costumeErrors.download.InvalidDownloadRequest;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.encryption.AesEncryptionException;
 import org.uploader.fileuploadtest.exception_handling.costumeErrors.uploading.*;
 import org.uploader.fileuploadtest.mapper.ErrorMapper;
@@ -221,6 +222,29 @@ public class GlobalHandler {
 
     }
 
+    @ExceptionHandler(InvalidFileName.class)
+    public ResponseEntity<MainResponse> invalidFileName(InvalidFileName ex ,
+                                                       HttpServletRequest request ){
+
+        Map<String , String> errors = new HashMap<>();
+
+        errors.put("purpose : " , ex.getMessage());
+
+        ErrorResponse errorResponse = errorMapper.createNormalError(
+                request.getRequestURI(),
+                errors
+        );
+
+        MainResponse response = mainResponseMapper.failed(
+                HttpStatus.BAD_REQUEST.value(),
+                "invalid file name",
+                errorResponse
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+    }
+
     @ExceptionHandler(IncompletedUploadSession.class)
     public ResponseEntity<MainResponse> DirectoryError(IncompletedUploadSession ex ,
                                                        HttpServletRequest request ){
@@ -406,6 +430,31 @@ public class GlobalHandler {
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    //download errors
+
+    @ExceptionHandler(InvalidDownloadRequest.class)
+    public ResponseEntity<MainResponse> invalidDownloadRequest(InvalidDownloadRequest ex ,
+                                                              HttpServletRequest request ){
+
+        Map<String , String> errors = new HashMap<>();
+
+        errors.put("purpose : " , ex.getMessage());
+
+        ErrorResponse errorResponse = errorMapper.createNormalError(
+                request.getRequestURI(),
+                errors
+        );
+
+        MainResponse response = mainResponseMapper.failed(
+                HttpStatus.BAD_REQUEST.value(),
+                "invalid download request",
+                errorResponse
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
     }
 
     //Internal server errors
